@@ -85,8 +85,9 @@ static CIKernel *_MercatorFilterKernel = nil;
 - (CIImage *)outputImage
 {
 	CISampler *src = [CISampler samplerWithImage:inputImage];
-	double alphaDouble = [alpha doubleValue], betaDouble = [beta doubleValue];
-	double gammaDouble = [gamma doubleValue];
+//	double alphaDouble = [alpha doubleValue];
+//	double betaDouble = [beta doubleValue];
+//	double gammaDouble = [gamma doubleValue];
 	double aspectFloat = [aspect floatValue];
 	CGRect extent = inputImage.extent;
 	double width = extent.size.width;
@@ -99,12 +100,6 @@ static CIKernel *_MercatorFilterKernel = nil;
 		   [NSNumber numberWithDouble:width],
 		   [NSNumber numberWithDouble:oldHeight],
 		   [NSNumber numberWithDouble:newHeight],
-		   [NSNumber numberWithDouble:sin(alphaDouble)],
-		   [NSNumber numberWithDouble:cos(alphaDouble)],
-		   [NSNumber numberWithDouble:sin(betaDouble)],
-		   [NSNumber numberWithDouble:cos(betaDouble)],
-		   [NSNumber numberWithDouble:sin(gammaDouble)],
-		   [NSNumber numberWithDouble:cos(gammaDouble)],
 		   kCIApplyOptionExtent,
 		   [NSArray arrayWithObjects:
 		    (NSNumber *)kCFBooleanFalse,

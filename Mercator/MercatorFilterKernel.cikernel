@@ -2,13 +2,7 @@ kernel vec4 mercator(
 	sampler src,
 	float width,
 	float oldHeight,
-	float newHeight,
-	float sa,
-	float ca,
-	float sb,
-	float cb,
-	float sy,
-	float cy
+	float newHeight
 ) {
 	vec2 point;
 	float p, lat, lon, sinLat;
@@ -29,6 +23,8 @@ kernel vec4 mercator(
 	before.y = sinLat * sin_(lon);
 	before.z = cos(lat);
 
+	after = before;
+	/*
 	after.x =
 		before.x * (ca*cy - cb*sa*sy) +
 		before.y * (cy*sa + ca*cb*sy) +
@@ -44,6 +40,7 @@ kernel vec4 mercator(
 		before.y * (-ca*sb) +
 		before.z * (cb)
 	;
+	*/
 
 	lat = acos (
 		after.z / sqrt (after.x*after.x + after.y*after.y + after.z*after.z)
@@ -62,7 +59,6 @@ kernel vec4 mercator(
 
 	// fails at lon = +/- 180
 	lon = atan(after.y / (after.x + sqrt(after.x*after.x + after.y*after.y))) * 2.0;
-*/
 
 	lon = atan(after.y / after.x);
 	lon = compare(
@@ -76,6 +72,7 @@ kernel vec4 mercator(
 			after.y / (after.x + sqrt(after.x*after.x + after.y*after.y))
 		)
 	);
+*/
 
 	point.y = (0.5 + lat / pi) * oldHeight;
 	point.x = (0.5 + lon / (pi * 2.0)) * width;
