@@ -40,11 +40,11 @@ kernel vec4 mercator(
 		before.y * (-ca*sb) +
 		before.z * (cb)
 	;
-	*/
 
 	lat = acos (
 		after.z / sqrt (after.x*after.x + after.y*after.y + after.z*after.z)
 	);
+	*/
 
 	lat = lat - pi*0.5;
 
