@@ -9,10 +9,8 @@
 #import <QuartzCore/QuartzCore.h>
 
 @interface MercatorFilter : CIFilter {
-    CIImage      *inputImage;
-    CIVector     *inputCenter;
-    NSNumber     *inputWidth;
-    NSNumber     *inputAmount;
+	CIImage      *inputImage;
+	NSNumber     *alpha, *beta, *gamma, *aspect;
 }
 
 @end

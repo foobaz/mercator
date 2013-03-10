@@ -1,2 +1,2 @@
-"MercatorFilter" = "Mercator Filter";
-"filterDescription" = "The description for the filter MercatorFilter goes in here, the Description.strings file";
+"MercatorFilter" = "Mercator Projection";
+"filterDescription" = "Mercator project equirectangular map";

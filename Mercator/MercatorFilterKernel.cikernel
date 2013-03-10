@@ -1,17 +1,84 @@
-float smoothstep(float x)
-{
-    return (x * -2.0 + 3.0) * x * x;
-}
+kernel vec4 mercator(
+	sampler src,
+	float width,
+	float oldHeight,
+	float newHeight,
+	float sa,
+	float ca,
+	float sb,
+	float cb,
+	float sy,
+	float cy
+) {
+	vec2 point;
+	float p, lat, lon, sinLat;
+	float pi = 3.14159265358979323846;
+	vec3 before, after;
 
-kernel vec4 funHouse(sampler src, float cenx, float invradius, float radius, float scale)
-{
-    float d0;
-    vec2 t1, r1;
+	point = destCoord();
 
-    t1 = destCoord();
-    r1.x = (t1.x - cenx) * invradius;
-    d0 = clamp(abs(r1.x), 0.0, 1.0);
-    d0 = smoothstep(1.0 - d0) * (scale - 1.0) + 1.0;
-    t1.x = r1.x * d0 * radius + cenx;
-    return sample(src, samplerTransform(src, t1));
+	lon = (point.x/width-0.5) * 2.0 * pi;
+	p = (point.y-newHeight*0.5) / (width * 0.5) * pi;
+
+	lat = atan((exp(p) - exp(-p)) * 0.5);
+
+	lat = lat + pi*0.5;
+
+	sinLat = sin(lat);
+	before.x = sinLat * cos_(lon);
+	before.y = sinLat * sin_(lon);
+	before.z = cos(lat);
+
+	after.x =
+		before.x * (ca*cy - cb*sa*sy) +
+		before.y * (cy*sa + ca*cb*sy) +
+		before.z * (sb*sy)
+	;
+	after.y =
+		before.x * (-cb*cy*sa-ca*sy) +
+		before.y * (ca*cb*cy - sa*sy) +
+		before.z * (cy*sb)
+	;
+	after.z =
+		before.x * (sa*sb) +
+		before.y * (-ca*sb) +
+		before.z * (cb)
+	;
+
+	lat = acos (
+		after.z / sqrt (after.x*after.x + after.y*after.y + after.z*after.z)
+	);
+
+	lat = lat - pi*0.5;
+
+/*
+	// fails at lon = +/- 90
+	lon = atan(after.y / after.x);
+	lon = compare(
+		after.x,
+		compare(after.y, lon - pi, lon + pi),
+		lon
+	);
+
+	// fails at lon = +/- 180
+	lon = atan(after.y / (after.x + sqrt(after.x*after.x + after.y*after.y))) * 2.0;
+*/
+
+	lon = atan(after.y / after.x);
+	lon = compare(
+		abs(after.y) - abs(after.x),
+		compare(
+			after.x,
+			compare(after.y, lon - pi, lon + pi),
+			lon
+		),
+		2.0 * atan(
+			after.y / (after.x + sqrt(after.x*after.x + after.y*after.y))
+		)
+	);
+
+	point.y = (0.5 + lat / pi) * oldHeight;
+	point.x = (0.5 + lon / (pi * 2.0)) * width;
+
+	return sample(src, samplerTransform(src, point));
 }

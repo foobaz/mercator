@@ -28,52 +28,95 @@ static CIKernel *_MercatorFilterKernel = nil;
     return [super init];
 }
 
-- (CGRect)regionOf:(int)sampler  destRect:(CGRect)rect  userInfo:(NSNumber *)radius
+- (CGRect)regionOf:(int)sampler  destRect:(CGRect)rect  userInfo:(id)userInfo
 {
-    return CGRectInset(rect, -[radius floatValue], 0);
+	return rect;
+}
+
+- (NSArray *)inputKeys {
+	return [NSArray
+		   arrayWithObjects:
+		   @"inputImage", @"alpha", @"beta", @"gamma", @"aspect", nil
+		   ];
 }
 
 - (NSDictionary *)customAttributes
 {
-    return @{
-        @"inputCenter":@{
-            kCIAttributeDefault:[CIVector vectorWithX:200.0 Y:200.0],
-            kCIAttributeType:kCIAttributeTypePosition,
-        },
-        @"inputWidth":@{
-            kCIAttributeMin:@1.00,
-            kCIAttributeSliderMin:@1.00,
-            kCIAttributeSliderMax:@1000.00,
-            kCIAttributeDefault:@400.00,
-            kCIAttributeIdentity:@400.00,
-            kCIAttributeType:kCIAttributeTypeDistance,
-        },
-        @"inputAmount":@{
-            kCIAttributeMin:@0.00,
-            kCIAttributeSliderMin:@0.00,
-            kCIAttributeSliderMax:@2.00,
-            kCIAttributeDefault:@0.50,
-            kCIAttributeIdentity:@0.00,
-            kCIAttributeType:kCIAttributeTypeDistance,
-        },
-    };
+	return @{
+		@"alpha":@{
+		  kCIAttributeMin:@-M_PI,
+    kCIAttributeMax:@M_PI,
+    kCIAttributeSliderMin:@-M_PI,
+    kCIAttributeSliderMax:@M_PI,
+    kCIAttributeDefault:@0,
+    kCIAttributeIdentity:@0,
+    kCIAttributeType:kCIAttributeTypeAngle,
+    },
+  @"beta":@{
+		  kCIAttributeMin:@-M_PI,
+    kCIAttributeMax:@M_PI,
+    kCIAttributeSliderMin:@-M_PI,
+    kCIAttributeSliderMax:@M_PI,
+    kCIAttributeDefault:@0,
+    kCIAttributeIdentity:@0,
+    kCIAttributeType:kCIAttributeTypeAngle,
+    },
+  @"gamma":@{
+		  kCIAttributeMin:@-M_PI,
+    kCIAttributeMax:@M_PI,
+    kCIAttributeSliderMin:@-M_PI,
+    kCIAttributeSliderMax:@M_PI,
+    kCIAttributeDefault:@0,
+    kCIAttributeIdentity:@0,
+    kCIAttributeType:kCIAttributeTypeAngle,
+    },
+  @"aspect":@{
+		  kCIAttributeMin:@0,
+    kCIAttributeSliderMin:@0,
+    kCIAttributeSliderMax:@4,
+    kCIAttributeDefault:@2,
+    kCIAttributeIdentity:@1,
+    kCIAttributeType:kCIAttributeTypeScalar,
+    },
+  };
 }
 
 // called when setting up for fragment program and also calls fragment program
 - (CIImage *)outputImage
 {
-    float radius;
-    CISampler *src;
-    
-    src = [CISampler samplerWithImage:inputImage];
-    radius = [inputWidth floatValue] * 0.5;
-    return [self apply:_MercatorFilterKernel, src,
-        [NSNumber numberWithFloat:[inputCenter X]],
-        [NSNumber numberWithFloat:1.0 / radius],
-        [NSNumber numberWithFloat:radius],
-        [NSNumber numberWithFloat:1.0 / pow(10.0, [inputAmount floatValue])],
-	    kCIApplyOptionDefinition, [[src definition] insetByX:-radius Y:-radius],
-	    kCIApplyOptionUserInfo, [NSNumber numberWithFloat:radius], nil];
+	CISampler *src = [CISampler samplerWithImage:inputImage];
+	double alphaDouble = [alpha doubleValue], betaDouble = [beta doubleValue];
+	double gammaDouble = [gamma doubleValue];
+	double aspectFloat = [aspect floatValue];
+	CGRect extent = inputImage.extent;
+	double width = extent.size.width;
+	double oldHeight = extent.size.height;
+	double newHeight = width / aspectFloat;
+
+	return [self apply:
+		   _MercatorFilterKernel,
+		   src,
+		   [NSNumber numberWithDouble:width],
+		   [NSNumber numberWithDouble:oldHeight],
+		   [NSNumber numberWithDouble:newHeight],
+		   [NSNumber numberWithDouble:sin(alphaDouble)],
+		   [NSNumber numberWithDouble:cos(alphaDouble)],
+		   [NSNumber numberWithDouble:sin(betaDouble)],
+		   [NSNumber numberWithDouble:cos(betaDouble)],
+		   [NSNumber numberWithDouble:sin(gammaDouble)],
+		   [NSNumber numberWithDouble:cos(gammaDouble)],
+		   kCIApplyOptionExtent,
+		   [NSArray arrayWithObjects:
+		    (NSNumber *)kCFBooleanFalse,
+		    (NSNumber *)kCFBooleanFalse,
+//		    [NSNumber numberWithFloat:oldHeight - newHeight],
+//		    [NSNumber numberWithFloat:(oldHeight - newHeight) * 0.5f],
+		    [NSNumber numberWithDouble:width],
+		    [NSNumber numberWithDouble:newHeight],
+		    nil
+		    ],
+		   nil
+		   ];
 }
 
 @end
